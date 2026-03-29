@@ -6,7 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
-    protected $fillable = ['order_id', 'amount', 'status'];
+    protected $fillable = [
+        'order_id',
+        'amount',
+        'status',
+        'payment_method',
+        'transaction_id'
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'decimal:2',
+        ];
+    }
 
     public function order()
     {

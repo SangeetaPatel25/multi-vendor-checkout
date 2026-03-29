@@ -6,7 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = ['user_id', 'vendor_id', 'status', 'total'];
+    protected $fillable = [
+        'user_id',
+        'vendor_id',
+        'status',
+        'total',
+        'commission_amount',
+        'vendor_amount',
+        'order_number'
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'total' => 'decimal:2',
+            'commission_amount' => 'decimal:2',
+            'vendor_amount' => 'decimal:2',
+        ];
+    }
 
     public function user()
     {

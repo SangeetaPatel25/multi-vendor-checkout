@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Create a test customer user
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Test Customer',
+            'email' => 'customer@example.com',
+            'role' => 'customer',
         ]);
+
+        // Run vendor seeder to create vendors with products
+        $this->call(VendorSeeder::class);
     }
 }
