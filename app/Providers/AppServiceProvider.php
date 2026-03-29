@@ -28,5 +28,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('admin.view-vendors', [AdminPolicy::class, 'viewVendors']);
         Gate::define('admin.view-customers', [AdminPolicy::class, 'viewCustomers']);
         Gate::define('admin.view-stats', [AdminPolicy::class, 'viewStats']);
+        Gate::define('admin.view-cart-items', [AdminPolicy::class, 'viewCartItems']);
+        Gate::define('admin.view-product-buyers', [AdminPolicy::class, 'viewProductBuyers']);
+        Gate::define('admin.view-products', [AdminPolicy::class, 'viewProducts']);
+        Gate::define('admin.create-products', [AdminPolicy::class, 'createProducts']);
     }
 }

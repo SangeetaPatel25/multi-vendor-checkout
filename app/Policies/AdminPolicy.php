@@ -54,4 +54,36 @@ class AdminPolicy
     {
         return $user->role === 'admin';
     }
+
+    /**
+     * Determine whether the user can view active cart items.
+     */
+    public function viewCartItems(User $user): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can view product buyers.
+     */
+    public function viewProductBuyers(User $user): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can view products.
+     */
+    public function viewProducts(User $user): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    /**
+     * Determine whether the user can create products.
+     */
+    public function createProducts(User $user): bool
+    {
+        return $user->role === 'admin';
+    }
 }

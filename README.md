@@ -59,6 +59,31 @@ LOG_STACK=daily
 LOG_DAILY_DAYS=14
 ```
 
+10. Queue and email testing:
+
+This project uses queued listeners for order placement and payment side effects. With the default configuration:
+
+```env
+QUEUE_CONNECTION=database
+MAIL_MAILER=log
+```
+
+run the queue worker to process queued listeners and see the email/log activity:
+
+```bash
+php artisan queue:work
+```
+
+With `MAIL_MAILER=log`, the email content is written to the daily log file in `storage/logs/` instead of being sent to a real inbox.
+
+If you want the listener logic to run immediately during the request for simpler local testing, you can switch to:
+
+```env
+QUEUE_CONNECTION=sync
+```
+
+In that mode, no queue worker is needed, but it is less representative of a production-style asynchronous setup.
+
 ## Seeded Accounts
 
 All seeded users use the password `password123`.
@@ -104,6 +129,42 @@ All API endpoints are served under the `/api` prefix.
 - `GET /api/admin/stats`
 
 For protected routes, send the Sanctum bearer token returned by `POST /api/login` or `POST /api/register`, along with `Accept: application/json`.
+
+## Blade UI
+
+A minimal Blade-based frontend is also included for local demo purposes. Available UI routes:
+
+- `GET /`
+- `GET /login`
+- `GET /products`
+- `GET /cart`
+- `GET /checkout/payment`
+- `GET /checkout/success`
+
+How it works:
+
+- The Blade UI calls the existing `/api/...` endpoints using JavaScript `fetch`.
+- Login stores the returned Sanctum bearer token in `localStorage`.
+- Protected API calls send `Authorization: Bearer <token>` automatically from the frontend.
+- The payment page uses the checkout response stored in browser state to confirm payment through `POST /api/payment/success`.
+
+Suggested UI demo flow:
+
+1. Open `/login`
+2. Login with `customer1@example.com` / `password123`
+3. Browse `/products` and add items to cart
+4. Open `/cart` and click checkout
+5. Confirm payment on `/checkout/payment`
+6. View the result on `/checkout/success`
+
+## Authentication And Access Note
+
+The project uses a shared authentication flow for both customers and admins, so the same login UI is used for both roles. Access is still separated securely through server-side Gates and policies.
+
+- Customer accounts can be created through the public registration flow.
+- Public registration always creates users with the `customer` role.
+- Admin accounts are provisioned only through seeders or direct database setup.
+- Even though the login entry point is shared, only users with the `admin` role can access admin APIs and the admin portal.
 
 ## Architecture Notes
 

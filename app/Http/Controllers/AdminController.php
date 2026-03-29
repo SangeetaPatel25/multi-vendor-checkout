@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdminStoreProductRequest;
+use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Gate;
@@ -183,5 +187,137 @@ class AdminController extends Controller
         return $this->apiResponse([
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * View active cart items across all customers.
+     */
+    public function getActiveCartItems()
+    {
+        Gate::authorize('admin.view-cart-items');
+
+        $cartItems = CartItem::with(['cart.user', 'product.vendor'])
+            ->latest()
+            ->get()
+            ->map(function ($cartItem) {
+                return [
+                    'id' => $cartItem->id,
+                    'quantity' => $cartItem->quantity,
+                    'customer' => [
+                        'id' => $cartItem->cart->user->id,
+                        'name' => $cartItem->cart->user->name,
+                        'email' => $cartItem->cart->user->email,
+                    ],
+                    'product' => [
+                        'id' => $cartItem->product->id,
+                        'name' => $cartItem->product->name,
+                        'price' => $cartItem->product->price,
+                    ],
+                    'vendor' => [
+                        'id' => $cartItem->product->vendor->id,
+                        'name' => $cartItem->product->vendor->name,
+                    ],
+                    'updated_at' => $cartItem->updated_at,
+                ];
+            });
+
+        return $this->apiResponse([
+            'cart_items' => $cartItems,
+        ]);
+    }
+
+    /**
+     * View product buyers grouped by product.
+     */
+    public function getProductBuyers()
+    {
+        Gate::authorize('admin.view-product-buyers');
+
+        $products = OrderItem::with(['product.vendor', 'order.user'])
+            ->whereHas('order', fn ($query) => $query->where('status', 'completed'))
+            ->get()
+            ->groupBy('product_id')
+            ->map(function ($items) {
+                $first = $items->first();
+
+                return [
+                    'product' => [
+                        'id' => $first->product->id,
+                        'name' => $first->product->name,
+                        'vendor' => $first->product->vendor->name,
+                    ],
+                    'units_sold' => $items->sum('quantity'),
+                    'buyers' => $items->groupBy('order.user_id')->map(function ($buyerItems) {
+                        $firstBuyerItem = $buyerItems->first();
+
+                        return [
+                            'customer_id' => $firstBuyerItem->order->user->id,
+                            'name' => $firstBuyerItem->order->user->name,
+                            'email' => $firstBuyerItem->order->user->email,
+                            'orders_count' => $buyerItems->pluck('order_id')->unique()->count(),
+                            'quantity_bought' => $buyerItems->sum('quantity'),
+                        ];
+                    })->values(),
+                ];
+            })
+            ->values();
+
+        return $this->apiResponse([
+            'product_buyers' => $products,
+        ]);
+    }
+
+    /**
+     * View all products for admin inventory management.
+     */
+    public function getProducts()
+    {
+        Gate::authorize('admin.view-products');
+
+        $products = Product::with('vendor')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'stock' => $product->stock,
+                    'vendor' => [
+                        'id' => $product->vendor->id,
+                        'name' => $product->vendor->name,
+                    ],
+                ];
+            });
+
+        return $this->apiResponse([
+            'products' => $products,
+        ]);
+    }
+
+    /**
+     * Create a new product as admin.
+     */
+    public function storeProduct(AdminStoreProductRequest $request)
+    {
+        Gate::authorize('admin.create-products');
+
+        $product = Product::create($request->validated());
+        $product->load('vendor');
+
+        return $this->apiResponse([
+            'success' => true,
+            'message' => 'Product created successfully.',
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'vendor' => [
+                    'id' => $product->vendor->id,
+                    'name' => $product->vendor->name,
+                ],
+            ],
+        ], 201);
     }
 }
