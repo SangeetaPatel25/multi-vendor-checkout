@@ -184,7 +184,3 @@ The project uses a shared authentication flow for both customers and admins, so 
 - Application logging uses Laravel daily log rotation for easier maintenance and log retention.
 - Race-condition protection is simulated at the database query level rather than through distributed locking.
 - Auto-cancel scheduling is registered, but it requires a scheduler process such as `php artisan schedule:work` or a real cron entry to run continuously.
-
-## Submission Note
-
-This workspace is prepared to be pushed to GitHub or Bitbucket, but publishing to a remote repository still needs your repository URL and credentials from your machine/session.
