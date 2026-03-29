@@ -1,58 +1,129 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Multi-Vendor Checkout
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel-based multi-vendor checkout demo with vendor-split orders, cart and checkout services, form requests, events/listeners, Sanctum authentication, and admin authorization via Gates.
 
-## About Laravel
+## Setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+1. Clone the repository.
+2. Install dependencies:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+3. Copy environment settings:
 
-## Contributing
+```bash
+copy .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. Configure the database in `.env`.
+   Default `.env.example` uses SQLite. For SQLite, create the database file if needed:
 
-## Code of Conduct
+```bash
+New-Item -ItemType File -Force database\\database.sqlite
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5. Generate the application key:
 
-## Security Vulnerabilities
+```bash
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+6. Run migrations and seeders:
 
-## License
+```bash
+php artisan migrate:fresh --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+7. Start the app:
+
+```bash
+php artisan serve
+```
+
+8. Optional background workers:
+
+```bash
+php artisan queue:work
+php artisan schedule:work
+```
+
+9. Logging:
+
+The project uses Laravel daily log rotation. Logs are written under `storage/logs/` with filenames like `laravel-YYYY-MM-DD.log`, and the default retention is `14` days. You can adjust this through:
+
+```env
+LOG_CHANNEL=stack
+LOG_STACK=daily
+LOG_DAILY_DAYS=14
+```
+
+## Seeded Accounts
+
+All seeded users use the password `password123`.
+
+### Customers
+
+- `customer1@example.com`
+- `customer2@example.com`
+
+### Vendor Owners
+
+- `john@techstore.com` -> `TechStore Pro`
+- `sarah@fashionhub.com` -> `FashionHub`
+- `mike@homedecor.com` -> `HomeDecor Plus`
+
+### Admin
+
+- `admin@example.com`
+
+## Seed Data
+
+The main seeder runs:
+
+- [`CustomerSeeder`](C:/laragon/www/multi-vendor-checkout/database/seeders/CustomerSeeder.php)
+- [`VendorSeeder`](C:/laragon/www/multi-vendor-checkout/database/seeders/VendorSeeder.php)
+- [`ProductSeeder`](C:/laragon/www/multi-vendor-checkout/database/seeders/ProductSeeder.php)
+- [`AdminSeeder`](C:/laragon/www/multi-vendor-checkout/database/seeders/AdminSeeder.php)
+
+## Useful Endpoints
+
+All API endpoints are served under the `/api` prefix.
+
+- `POST /api/register`
+- `POST /api/login`
+- `POST /api/logout`
+- `GET /api/products`
+- `POST /api/cart/add`
+- `GET /api/cart`
+- `POST /api/checkout`
+- `POST /api/payment/success`
+- `GET /api/orders`
+- `GET /api/admin/orders`
+- `GET /api/admin/stats`
+
+For protected routes, send the Sanctum bearer token returned by `POST /api/login` or `POST /api/register`, along with `Accept: application/json`.
+
+## Architecture Notes
+
+- Business logic lives in service classes:
+  [`CartService`](C:/laragon/www/multi-vendor-checkout/app/Services/CartService.php) and [`CheckoutService`](C:/laragon/www/multi-vendor-checkout/app/Services/CheckoutService.php).
+- Validation is handled with form requests for cart actions, checkout, and payment success.
+- Checkout emits [`OrderPlaced`](C:/laragon/www/multi-vendor-checkout/app/Events/OrderPlaced.php) and [`PaymentSucceeded`](C:/laragon/www/multi-vendor-checkout/app/Events/PaymentSucceeded.php), which are mapped in [`EventServiceProvider`](C:/laragon/www/multi-vendor-checkout/app/Providers/EventServiceProvider.php).
+- Admin access is restricted through Gates backed by [`AdminPolicy`](C:/laragon/www/multi-vendor-checkout/app/Policies/AdminPolicy.php).
+- Checkout creates one order per vendor so a mixed cart becomes multiple vendor-owned orders.
+- Inventory protection is simulated with atomic stock decrements during checkout and stock restoration when stale unpaid orders are auto-cancelled.
+
+## Trade-offs And Assumptions
+
+- Vendor owners are stored as normal users with a linked `vendors` record. The app currently uses the `role` field mainly for `admin` and `customer`, so vendor owners remain `customer` users with vendor profiles.
+- Payment handling is mocked. Checkout creates `pending` orders and `pending` payments, and `POST /api/payment/success` simulates the gateway callback/finalization step.
+- Email notification is implemented as a lightweight mail/log flow in the listener so local environments work without a real mail provider.
+- Application logging uses Laravel daily log rotation for easier maintenance and log retention.
+- Race-condition protection is simulated at the database query level rather than through distributed locking.
+- Auto-cancel scheduling is registered, but it requires a scheduler process such as `php artisan schedule:work` or a real cron entry to run continuously.
+
+## Submission Note
+
+This workspace is prepared to be pushed to GitHub or Bitbucket, but publishing to a remote repository still needs your repository URL and credentials from your machine/session.
